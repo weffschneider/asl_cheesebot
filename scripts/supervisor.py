@@ -79,6 +79,66 @@ class Supervisor:
         self.trans_listener = tf.TransformListener()
         # TODO: publish animal locations to transform tree
 
+        ##### For animal detection
+        # num. of animals (get updated)
+        self.num_animals = 0
+        self.animal_poses = []
+
+        # flag for detection
+        self.cat_detected = False
+        self.dog_detected = False
+
+        # detector labels in tfmodels/coco_labels.txt
+        # published by "camera_common" in "detector.py"
+        rospy.Subscriber('/detector/cat', DetectedObject, self.animal_detected_callback)
+        rospy.Subscriber('/detector/dog', DetectedObject, self.animal_detected_callback)
+
+    def animal_detected_callback(self, msg):
+        # call back for when the detector has found an animal - cat or dog -
+
+        # record the animal's position w.r.t. the robot's pose
+        if msg.name == 'cat' and not self.cat_detected:
+            self.animal_poses.append( self.record_animal_frame(msg) )
+            self.cat_detected = True
+            self.num_animals += 1
+
+        elif msg.name == 'dog' and not self.dog_detected:
+            self.animal_poses.append( self.record_animal_frame(msg) )
+            self.dog_detected = True
+            self.num_animals += 1
+
+    def record_animal_frame(self, msg):
+        # OUT : [x, y, theta] of animal position in world frame
+
+        # msg type : DetectedObject
+        name = msg.name
+        distance   = msg.distance
+        thetaleft  = msg.thetaleft
+        thetaright = msg.thetaright
+
+        # animal location in robot's frame
+        theta = (thetaleft + thetaright)/2.0
+
+        # frame name depends on what animal we found
+        frame_name = name + "_pose"
+
+        # add frame to "animal_pose" from "base_footprint"
+        br = tf.TransformBroadcaster()
+        br.sendTransform( (distance*np.cos(theta), distance*np.sin(theta), theta),
+                          (0., 0., 0., 1.),
+                          rospy.Time.now(),
+                          frame_name,
+                          "base_footprint")
+
+        # get position in world frame
+        try:
+            trans_ = self.trans_listener.lookupTransform('/map', frame_name, rospy.Time(0))
+            animal_pose = (trans[0], trans_[1])
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+
+            return animal_pose
+
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
 
@@ -198,7 +258,7 @@ class Supervisor:
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
 
         # TODO: fill me in with useful stuff
-        
+
         self.mode = Mode.NAV
 
     def loop(self):
@@ -250,7 +310,7 @@ class Supervisor:
 
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 # waypoint reached
-                
+
                 if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta):
                     # at firestation
                     if (self.exploring):
@@ -278,7 +338,7 @@ class Supervisor:
                 self.update_waypoint()  # TODO: maybe want separate update_waypoint function for different places?like
             else:
                 pass
-                
+
         else:
             raise Exception('This mode is not supported: %s'
                 % str(self.mode))
