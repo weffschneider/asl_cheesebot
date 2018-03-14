@@ -143,9 +143,13 @@ class Detector:
 
         ### YOUR CODE HERE ###
 
-        x = 1 # CHANGE ME
-        y = 0 # CHANGE ME
-        z = 0 # CHANGE ME
+        x = (u - self.cx)/self.fx
+        y = (v - self.cy)/self.fy
+        norm = np.linalg.norm(np.array([x, y, 1.]))
+
+        x = x / norm # CHANGE ME
+        y = y / norm # CHANGE ME
+        z = 1. / norm # CHANGE ME
 
         ### END OF YOUR CODE ###
 
@@ -166,6 +170,7 @@ class Detector:
         num_m, dist = 0, 0
         for m in meas:
             if m>0 and m<float('Inf'):
+                # distance : average of rays hitting the object
                 dist += m
                 num_m += 1
         if num_m>0:
@@ -261,11 +266,15 @@ class Detector:
 
         ### YOUR CODE HERE ###
 
-        self.cx = 0 # CHANGE ME
-        self.cy = 0 # CHANGE ME
-        self.fx = 1 # CHANGE ME
-        self.fy = 1 # CHANGE ME
+        # Intrinsic camera matrix for the raw (distorted) images.
+        #     [fx  0 cx]
+        # K = [ 0 fy cy]
+        #     [ 0  0  1]
 
+        self.cx = msg.K[2]
+        self.cy = msg.K[5]
+        self.fx = msg.K[0]
+        self.fy = msg.K[4]
         ### END OF YOUR CODE ###
 
     def laser_callback(self, msg):
