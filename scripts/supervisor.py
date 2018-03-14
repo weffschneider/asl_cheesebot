@@ -80,12 +80,8 @@ class Supervisor:
         # create subscribers
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
-<<<<<<< HEAD
-        # TODO: add Subscriber for rescue_on message: self.rescue_on_callback
-=======
         rospy.Subscriber('/rescue_on', Bool, self.rescue_on_callback)
         # TODO: add Subscriber for animal detection: self.animal_detected_callback
->>>>>>> master
 
         self.trans_listener = tf.TransformListener()
 
@@ -205,7 +201,7 @@ class Supervisor:
 
     def set_goal_pose(self,x,y,theta):
         """ sets the goal pose """
-        
+
         self.x_g = x
         self.y_g = y
         self.theta_g = theta
@@ -245,14 +241,14 @@ class Supervisor:
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
         self.rescue_ready.publish(True)
-        
+
     def update_waypoint(self):
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
 
         # update_waypoint should only be called when you are rescuing animals
         # otherwise this is going to start setting the waypoint to the nearest animal
         # to rescue and compete with 2D nav in RViz
-        
+
         # 1. Find closest unrescued animal
         # 2. Go to animal
         # 3. Rescue
@@ -269,7 +265,7 @@ class Supervisor:
             # in the lis that has not been rescued yet.
             # Because we know that there are 3 animals max to be picked up
             # this for loop is fine. For any other circumstance this should be
-            # done differently. 
+            # done differently.
             animal_dist = np.zeros((self.num_animals))
             for i in range(self.num_animals):
                 if self.to_rescue[i]:
