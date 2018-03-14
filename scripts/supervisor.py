@@ -12,7 +12,7 @@ import numpy as np
 
 # threshold at which we consider the robot at a location
 POS_EPS = .1
-THETA_EPS = 1.7
+THETA_EPS = .3
 
 # time to stop at a stop sign
 STOP_TIME = 3
@@ -213,7 +213,8 @@ class Supervisor:
     def close_to(self,x,y,theta,eps):
         """ checks if the robot is at a pose within some threshold """
 
-        return (abs(x-self.x)<eps and abs(y-self.y)<eps and abs(theta-self.theta)<THETA_EPS)
+        #return (abs(x-self.x)<eps and abs(y-self.y)<eps and abs(theta-self.theta)<THETA_EPS)
+        return (abs(x-self.x)<eps and abs(y-self.y)<eps) # for now we don't care about orientation
 
     def set_goal_pose(self,x,y,theta):
         """ sets the goal pose """
@@ -354,7 +355,7 @@ class Supervisor:
             if self.close_to(self.x_g,self.y_g,self.theta_g,POS_EPS):
                 # waypoint reached
 
-                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,7*POS_EPS):
+                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,3*POS_EPS):
                     # at firestation
                     if (self.exploring):
                         self.mode = Mode.WAIT_FOR_INSTR
