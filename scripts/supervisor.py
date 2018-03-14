@@ -2,7 +2,7 @@
 
 import rospy
 from gazebo_msgs.msg import ModelStates
-from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32MultiArray, String, Bool
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from asl_turtlebot.msg import DetectedObject
 import tf
@@ -73,13 +73,13 @@ class Supervisor:
         self.nav_goal_publisher = rospy.Publisher('/cmd_nav', Pose2D, queue_size=10)
         self.pose_goal_publisher = rospy.Publisher('/cmd_pose', Pose2D, queue_size=10)
         self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        # TODO: add Publisher for ready_to_rescue message
+        self.rescue_ready = rospy.Publisher('/ready_to_rescue', Bool, queue_size=1)
 
         # create subscribers
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
+        rospy.Subscriber('/rescue_on', Bool, self.rescue_on_callback)
         # TODO: add Subscriber for animal detection: self.animal_detected_callback
-        # TODO: add Subscriber for rescue_on message: self.rescue_on_callback
 
         self.trans_listener = tf.TransformListener()
         # TODO: publish animal locations to transform tree
@@ -175,8 +175,7 @@ class Supervisor:
     def rescue_on_callback(self, msg):
         """ callback for when we receive a rescue_on message from the fire station """
 
-        # TODO: not sure about the message type here
-        rescue_on = msg.rescue_on
+        rescue_on = msg.data
 
         if rescue_on and self.mode == Mode.WAIT_FOR_INSTR:
             self.update_waypoint()
@@ -250,7 +249,7 @@ class Supervisor:
     def init_rescue(self):
         """ initiates an animal rescue """
 
-        self.rescue_start - rospy.get_rostime()
+        self.rescue_start = rospy.get_rostime()
         self.mode = Mode.RESCUE
 
     def has_rescued(self):
@@ -259,8 +258,8 @@ class Supervisor:
 
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
-        # TODO: publish message
-
+        self.rescue_ready.publish(True)
+        
     def update_waypoint(self):
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
 
@@ -358,6 +357,7 @@ class Supervisor:
                     # at firestation
                     if (self.exploring):
                         self.mode = Mode.WAIT_FOR_INSTR
+                        self.wait_for_instr()
                     else:
                         self.mode = IDLE
 
@@ -373,7 +373,7 @@ class Supervisor:
                 self.nav_to_pose()
 
         elif self.mode == Mode.WAIT_FOR_INSTR:
-            self.wait_for_instr()
+            pass
 
         elif self.mode == Mode.RESCUE:
             # save the animal!
