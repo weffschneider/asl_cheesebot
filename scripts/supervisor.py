@@ -66,9 +66,7 @@ class Supervisor:
 
         # rescuing animals
         #self.animal_poses = []
-        #self.num_animals = 0
-        self.animal_poses = [(1.540,0.518),(1.938,2.680),(1.559,1.709)] #TEST
-        self.num_animals = 3 #TEST
+        self.animal_poses = [(1.4,0.3),(2.16,1.5)] # TEST
         self.initialized_rescue = False
 
         # create publishers
@@ -102,12 +100,10 @@ class Supervisor:
         if msg.name == 'cat' and not self.cat_detected:
             self.animal_poses.append( self.record_animal_frame(msg) )
             self.cat_detected = True
-            self.num_animals += 1
 
         elif msg.name == 'dog' and not self.dog_detected:
             self.animal_poses.append( self.record_animal_frame(msg) )
             self.dog_detected = True
-            self.num_animals += 1
 
     def record_animal_frame(self, msg):
         # OUT : [x, y, theta] of animal position in world frame
@@ -275,9 +271,11 @@ class Supervisor:
         # 4. Repeat 1-3 until no animals to rescue
         # 5. Return to firestation
 
+        num_animals = len(self.animal_poses)
+        
         if not self.initialized_rescue:
             # initialize boolean array to record which animals have been rescued
-            self.to_rescue = np.ones((self.num_animals), dtype=bool)
+            self.to_rescue = np.ones(num_animals, dtype=bool)
             self.initialized_rescue = True
 
         if np.any(self.to_rescue):
@@ -286,8 +284,8 @@ class Supervisor:
             # Because we know that there are 3 animals max to be picked up
             # this for loop is fine. For any other circumstance this should be
             # done differently. 
-            animal_dist = np.zeros((self.num_animals))
-            for i in range(self.num_animals):
+            animal_dist = np.zeros(num_animals)
+            for i in range(num_animals):
                 if self.to_rescue[i]:
                     pose_rescue = self.animal_poses[i]
                     self.to_rescue[i] = False
