@@ -65,8 +65,10 @@ class Supervisor:
         self.exploring = True
 
         # rescuing animals
-        self.animal_poses = []
-        self.num_animals = 0
+        #self.animal_poses = []
+        #self.num_animals = 0
+        self.animal_poses = [(1.540,0.518),(1.938,2.680),(1.559,1.709)] #TEST
+        self.num_animals = 3 #TEST
         self.initialized_rescue = False
 
         # create publishers
