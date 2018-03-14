@@ -8,6 +8,7 @@ from asl_turtlebot.msg import DetectedObject
 import tf
 import math
 from enum import Enum
+import numpy as np
 
 # threshold at which we consider the robot at a location
 POS_EPS = .1
@@ -51,11 +52,10 @@ class Supervisor:
         self.y_g = 0
         self.theta_g = 0
 
-        # assume we start at the fire station
-        # TODO: is this right?
-        self.firestation_x = self.x
-        self.firestation_y = self.y
-        self.firestation_theta = self.theta
+        # TODO: hard coded for now
+        self.firestation_x = 3.3
+        self.firestation_y = 1.5
+        self.firestation_theta = 0
 
         # current mode
         self.mode = Mode.IDLE
@@ -181,7 +181,7 @@ class Supervisor:
 
         if rescue_on and self.mode == Mode.WAIT_FOR_INSTR:
             self.update_waypoint()
-            self.mode = NAV
+            self.mode = Mode.NAV
             # NOTE: update_waypoint needs to happen BEFORE setting exploring to false,
             # otherwise we'll think we're done
             self.exploring = False
@@ -357,7 +357,7 @@ class Supervisor:
             if self.close_to(self.x_g,self.y_g,self.theta_g,POS_EPS):
                 # waypoint reached
 
-                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,2*POS_EPS):
+                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,7*POS_EPS):
                     # at firestation
                     if (self.exploring):
                         self.mode = Mode.WAIT_FOR_INSTR
@@ -368,7 +368,7 @@ class Supervisor:
                 else:
                     # non-firestation waypoint reached
                     if (self.exploring):
-                        self.update_waypoint()
+                        pass
                     else:
                         self.init_rescue()
 

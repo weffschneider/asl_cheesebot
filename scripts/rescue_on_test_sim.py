@@ -25,5 +25,5 @@ rospy.init_node('rescue_monitor', anonymous=True)
 
 rospy.Subscriber('/ready_to_rescue', Bool, rescue_on_callback)
 rescue_pub = rospy.Publisher('/rescue_on', Bool, queue_size=10)
-
+rospy.spin()
 
