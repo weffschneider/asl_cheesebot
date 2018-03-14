@@ -2,7 +2,7 @@
 
 import rospy
 from gazebo_msgs.msg import ModelStates
-from std_msgs.msg import Float32MultiArray, String, Bool
+from std_msgs.msg import Float32MultiArray, String
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from asl_turtlebot.msg import DetectedObject
 import tf
@@ -64,84 +64,25 @@ class Supervisor:
         # flags for control flow
         self.exploring = True
 
+        # rescuing animals
+        self.animal_poses = []
+        self.num_animals = 0
+        self.initialized_rescue = False
+
         # create publishers
         self.nav_goal_publisher = rospy.Publisher('/cmd_nav', Pose2D, queue_size=10)
         self.pose_goal_publisher = rospy.Publisher('/cmd_pose', Pose2D, queue_size=10)
         self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.rescue_ready = rospy.Publisher('/ready_to_rescue', Bool, queue_size=1)
-        
         # TODO: add Publisher for ready_to_rescue message
 
         # create subscribers
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
-        rospy.Subscriber('/rescue_on', Bool, self.rescue_on_callback)
-        
         # TODO: add Subscriber for animal detection: self.animal_detected_callback
         # TODO: add Subscriber for rescue_on message: self.rescue_on_callback
 
         self.trans_listener = tf.TransformListener()
         # TODO: publish animal locations to transform tree
-
-        ##### For animal detection
-        # num. of animals (get updated)
-        self.num_animals = 0
-        self.animal_poses = []
-
-        # flag for detection
-        self.cat_detected = False
-        self.dog_detected = False
-
-        # detector labels in tfmodels/coco_labels.txt
-        # published by "camera_common" in "detector.py"
-        rospy.Subscriber('/detector/cat', DetectedObject, self.animal_detected_callback)
-        rospy.Subscriber('/detector/dog', DetectedObject, self.animal_detected_callback)
-
-    def animal_detected_callback(self, msg):
-        # call back for when the detector has found an animal - cat or dog -
-
-        # record the animal's position w.r.t. the robot's pose
-        if msg.name == 'cat' and not self.cat_detected:
-            self.animal_poses.append( self.record_animal_frame(msg) )
-            self.cat_detected = True
-            self.num_animals += 1
-
-        elif msg.name == 'dog' and not self.dog_detected:
-            self.animal_poses.append( self.record_animal_frame(msg) )
-            self.dog_detected = True
-            self.num_animals += 1
-
-    def record_animal_frame(self, msg):
-        # OUT : [x, y, theta] of animal position in world frame
-
-        # msg type : DetectedObject
-        name = msg.name
-        distance   = msg.distance
-        thetaleft  = msg.thetaleft
-        thetaright = msg.thetaright
-
-        # animal location in robot's frame
-        theta = (thetaleft + thetaright)/2.0
-
-        # frame name depends on what animal we found
-        frame_name = name + "_pose"
-
-        # add frame to "animal_pose" from "base_footprint"
-        br = tf.TransformBroadcaster()
-        br.sendTransform( (distance*np.cos(theta), distance*np.sin(theta), theta),
-                          (0., 0., 0., 1.),
-                          rospy.Time.now(),
-                          frame_name,
-                          "base_footprint")
-
-        # get position in world frame
-        try:
-            trans_ = self.trans_listener.lookupTransform('/map', frame_name, rospy.Time(0))
-            animal_pose = (trans[0], trans_[1])
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            pass
-
-            return animal_pose
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -180,7 +121,7 @@ class Supervisor:
         """ callback for when we receive a rescue_on message from the fire station """
 
         # TODO: not sure about the message type here
-        rescue_on = msg.data
+        rescue_on = msg.rescue_on
 
         if rescue_on and self.mode == Mode.WAIT_FOR_INSTR:
             self.update_waypoint()
@@ -222,6 +163,13 @@ class Supervisor:
 
         return (abs(x-self.x)<POS_EPS and abs(y-self.y)<POS_EPS and abs(theta-self.theta)<THETA_EPS)
 
+    def set_goal_pose(self,x,y,theta):
+        """ sets the goal pose """
+        
+        self.x_g = x
+        self.y_g = y
+        self.theta_g = theta
+
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
 
@@ -247,7 +195,7 @@ class Supervisor:
     def init_rescue(self):
         """ initiates an animal rescue """
 
-        self.rescue_start = rospy.get_rostime()
+        self.rescue_start - rospy.get_rostime()
         self.mode = Mode.RESCUE
 
     def has_rescued(self):
@@ -257,13 +205,47 @@ class Supervisor:
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
         # TODO: publish message
-        self.rescue_ready.publish(True)
 
     def update_waypoint(self):
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
+        # update_waypoint should only be called when you are rescuing animals
+        # otherwise this is going to start setting the waypoint to the nearest animal
+        # to rescue and compete with 2D nav in RViz
+        
+        # 1. Find closest unrescued animal
+        # 2. Go to animal
+        # 3. Rescue
+        # 4. Repeat 1-3 until no animals to rescue
+        # 5. Return to firestation
 
-        # TODO: fill me in with useful stuff
+        if not self.initialized_rescue:
+            # initialize boolean array to record which animals have been rescued
+            self.to_rescue = np.ones((self.num_animals), dtype=bool)
+            self.initialized_rescue = True
 
+        if np.any(self.to_rescue):
+            # Using eclidean distance to find the closest animal
+            # TODO: update to find shortest feasible path length if possible
+            animal_dist = np.zeros((self.num_animals))
+            for i in range(self.num_animals):
+                animal_pose = self.animal_poses[i]
+                if self.to_rescue[i]:
+                    animal_dist[i] = np.linalg.norm([self.x-animal_pose[0],self.y-animal_pose[1]])
+                else:
+                    animal_dist[i] = 1000000
+
+            # Pick the closest animal to rescue
+            i_rescue = np.argmin(animal_dist)
+            pose_rescue = self.animal_poses[i_rescue]
+            self.to_rescue[i_rescue] = False
+
+            # Set the goal pose
+            self.set_goal_pose(animal_pose[0],animal_pose[1],0.0)
+        else:
+            # Go to the firestation
+            self.set_goal_pose(self.firestation.x,self.firestation.y,self.firestation.theta)
+
+        # Change the mode
         self.mode = Mode.NAV
 
     def loop(self):
@@ -315,12 +297,11 @@ class Supervisor:
 
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 # waypoint reached
-
+                
                 if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta):
                     # at firestation
                     if (self.exploring):
                         self.mode = Mode.WAIT_FOR_INSTR
-                        self.wait_for_instr()
                     else:
                         self.mode = IDLE
 
@@ -336,7 +317,7 @@ class Supervisor:
                 self.nav_to_pose()
 
         elif self.mode == Mode.WAIT_FOR_INSTR:
-            pass
+            self.wait_for_instr()
 
         elif self.mode == Mode.RESCUE:
             # save the animal!
@@ -344,7 +325,7 @@ class Supervisor:
                 self.update_waypoint()  # TODO: maybe want separate update_waypoint function for different places?like
             else:
                 pass
-
+                
         else:
             raise Exception('This mode is not supported: %s'
                 % str(self.mode))
