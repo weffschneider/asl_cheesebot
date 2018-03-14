@@ -12,7 +12,7 @@ import numpy as np
 
 # threshold at which we consider the robot at a location
 POS_EPS = .1
-THETA_EPS = .3
+THETA_EPS = 1.7
 
 # time to stop at a stop sign
 STOP_TIME = 3
@@ -24,7 +24,7 @@ STOP_MIN_DIST = .5
 CROSSING_TIME = 3
 
 # time to stop for animal rescue
-RESCUE_TIME = 10
+RESCUE_TIME = 3
 
 # state machine modes, not all implemented
 class Mode(Enum):
