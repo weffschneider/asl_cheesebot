@@ -281,23 +281,22 @@ class Supervisor:
             self.initialized_rescue = True
 
         if np.any(self.to_rescue):
-            # Using eclidean distance to find the closest animal
-            # TODO: update to find shortest feasible path length if possible
+            # Iterates through each of the animals and chooses the first one
+            # in the lis that has not been rescued yet.
+            # Because we know that there are 3 animals max to be picked up
+            # this for loop is fine. For any other circumstance this should be
+            # done differently. 
             animal_dist = np.zeros((self.num_animals))
             for i in range(self.num_animals):
-                animal_pose = self.animal_poses[i]
                 if self.to_rescue[i]:
-                    animal_dist[i] = np.linalg.norm([self.x-animal_pose[0],self.y-animal_pose[1]])
+                    pose_rescue = self.animal_poses[i]
+                    self.to_rescue[i] = False
+                    break
                 else:
-                    animal_dist[i] = 1000000
-
-            # Pick the closest animal to rescue
-            i_rescue = np.argmin(animal_dist)
-            pose_rescue = self.animal_poses[i_rescue]
-            self.to_rescue[i_rescue] = False
+                    pass
 
             # Set the goal pose
-            self.set_goal_pose(animal_pose[0],animal_pose[1],0.0)
+            self.set_goal_pose(pose_rescue[0],pose_rescue[1],0.0)
         else:
             # Go to the firestation
             self.set_goal_pose(self.firestation.x,self.firestation.y,self.firestation.theta)
