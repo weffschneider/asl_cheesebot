@@ -214,10 +214,10 @@ class Supervisor:
         vel_g_msg = Twist()
         self.cmd_vel_publisher.publish(vel_g_msg)
 
-    def close_to(self,x,y,theta):
+    def close_to(self,x,y,theta,eps):
         """ checks if the robot is at a pose within some threshold """
 
-        return (abs(x-self.x)<POS_EPS and abs(y-self.y)<POS_EPS and abs(theta-self.theta)<THETA_EPS)
+        return (abs(x-self.x)<eps and abs(y-self.y)<eps and abs(theta-self.theta)<THETA_EPS)
 
     def set_goal_pose(self,x,y,theta):
         """ sets the goal pose """
@@ -324,6 +324,8 @@ class Supervisor:
             rospy.loginfo("Current Mode: %s", self.mode)
             self.last_mode_printed = self.mode
 
+        print(self.mode)
+
         # checks wich mode it is in and acts accordingly
         if self.mode == Mode.IDLE:
             # send zero velocity
@@ -331,7 +333,7 @@ class Supervisor:
 
         elif self.mode == Mode.POSE:
             # moving towards a desired pose
-            if self.close_to(self.x_g,self.y_g,self.theta_g):
+            if self.close_to(self.x_g,self.y_g,self.theta_g,POS_EPS):
                 self.mode = Mode.IDLE
             else:
                 self.go_to_pose()
@@ -352,10 +354,10 @@ class Supervisor:
 
         elif self.mode == Mode.NAV:
 
-            if self.close_to(self.x_g,self.y_g,self.theta_g):
+            if self.close_to(self.x_g,self.y_g,self.theta_g,POS_EPS):
                 # waypoint reached
 
-                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta):
+                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,2*POS_EPS):
                     # at firestation
                     if (self.exploring):
                         self.mode = Mode.WAIT_FOR_INSTR
