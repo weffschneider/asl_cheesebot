@@ -287,7 +287,7 @@ class Supervisor:
             self.set_goal_pose(pose_rescue[0],pose_rescue[1],0.0)
         else:
             # Go to the firestation
-            self.set_goal_pose(self.firestation.x,self.firestation.y,self.firestation.theta)
+            self.set_goal_pose(self.firestation_x,self.firestation_y,self.firestation_theta)
 
         # Change the mode
         self.mode = Mode.NAV
@@ -352,7 +352,7 @@ class Supervisor:
                         self.mode = Mode.WAIT_FOR_INSTR
                         self.wait_for_instr()
                     else:
-                        self.mode = IDLE
+                        self.mode = Mode.IDLE
 
                 else:
                     # non-firestation waypoint reached
