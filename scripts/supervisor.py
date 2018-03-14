@@ -159,17 +159,6 @@ class Supervisor:
         if dist > 0 and dist < STOP_MIN_DIST and self.mode == Mode.NAV:
             self.init_stop_sign()
 
-    def animal_detected_callback(self, msg):
-        """ callback for when the detector has found animal. """
-
-        # distance to the animal
-        dist = msg.distance
-
-        # TODO: record animal position in some waypoint datatype
-        # NOTE: we don't need to change modes here, right?
-
-        # TODO: send message that we found it, for debugging
-
     def rescue_on_callback(self, msg):
         """ callback for when we receive a rescue_on message from the fire station """
 
@@ -324,10 +313,12 @@ class Supervisor:
 
         print(self.mode)
 
-        # checks wich mode it is in and acts accordingly
+        # checks which mode it is in and acts accordingly
         if self.mode == Mode.IDLE:
             # send zero velocity
             self.stay_idle()
+            if not self.exploring:
+                print('YAY WE ARE DONE!')
 
         elif self.mode == Mode.POSE:
             # moving towards a desired pose
@@ -380,7 +371,7 @@ class Supervisor:
         elif self.mode == Mode.RESCUE:
             # save the animal!
             if self.has_rescued():
-                self.update_waypoint()  # TODO: maybe want separate update_waypoint function for different places?like
+                self.update_waypoint()
             else:
                 pass
 
