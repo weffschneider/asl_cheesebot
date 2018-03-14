@@ -73,11 +73,9 @@ class Supervisor:
         # create subscribers
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
-        # TODO: add Subscriber for animal detection: self.animal_detected_callback
         # TODO: add Subscriber for rescue_on message: self.rescue_on_callback
 
         self.trans_listener = tf.TransformListener()
-        # TODO: publish animal locations to transform tree
 
         ##### For animal detection
         # num. of animals (get updated)
@@ -87,6 +85,7 @@ class Supervisor:
         # flag for detection
         self.cat_detected = False
         self.dog_detected = False
+        self.sign_detected = False
 
         # detector labels in tfmodels/coco_labels.txt
         # published by "camera_common" in "detector.py"
@@ -107,6 +106,7 @@ class Supervisor:
             self.dog_detected = True
             self.num_animals += 1
 
+
     def record_animal_frame(self, msg):
         # OUT : [x, y, theta] of animal position in world frame
 
@@ -123,21 +123,10 @@ class Supervisor:
         frame_name = name + "_pose"
 
         # add frame to "animal_pose" from "base_footprint"
-        br = tf.TransformBroadcaster()
-        br.sendTransform( (distance*np.cos(theta), distance*np.sin(theta), theta),
-                          (0., 0., 0., 1.),
-                          rospy.Time.now(),
-                          frame_name,
-                          "base_footprint")
+        pose_x = self.x + distance*np.cos(self.theta - theta)
+        pose_y = self.y + distance*np.sin(self.theta - theta)
 
-        # get position in world frame
-        try:
-            trans_ = self.trans_listener.lookupTransform('/map', frame_name, rospy.Time(0))
-            animal_pose = (trans[0], trans_[1])
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            pass
-
-            return animal_pose
+        return (pose_x, pose_y)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -161,16 +150,6 @@ class Supervisor:
         if dist > 0 and dist < STOP_MIN_DIST and self.mode == Mode.NAV:
             self.init_stop_sign()
 
-    def animal_detected_callback(self, msg):
-        """ callback for when the detector has found animal. """
-
-        # distance to the animal
-        dist = msg.distance
-
-        # TODO: record animal position in some waypoint datatype
-        # NOTE: we don't need to change modes here, right?
-
-        # TODO: send message that we found it, for debugging
 
     def rescue_on_callback(self, msg):
         """ callback for when we receive a rescue_on message from the fire station """
