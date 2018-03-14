@@ -17,7 +17,7 @@ def rescue_on_callback(msg):
 
 
 
-rospy.init_node('rescue_moniter', anonymous=True)
+rospy.init_node('rescue_monitor', anonymous=True)
 
 
 rospy.Subscriber('/ready_to_rescue', Bool, rescue_on_callback)
