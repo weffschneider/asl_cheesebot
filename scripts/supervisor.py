@@ -2,12 +2,13 @@
 
 import rospy
 from gazebo_msgs.msg import ModelStates
-from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32MultiArray, String, Bool
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from asl_turtlebot.msg import DetectedObject
 import tf
 import math
 from enum import Enum
+import numpy as np
 
 # threshold at which we consider the robot at a location
 POS_EPS = .1
@@ -51,11 +52,10 @@ class Supervisor:
         self.y_g = 0
         self.theta_g = 0
 
-        # assume we start at the fire station
-        # TODO: is this right?
-        self.firestation_x = self.x
-        self.firestation_y = self.y
-        self.firestation_theta = self.theta
+        # TODO: hard coded for now
+        self.firestation_x = 3.3
+        self.firestation_y = 1.5
+        self.firestation_theta = 0
 
         # current mode
         self.mode = Mode.IDLE
@@ -64,23 +64,30 @@ class Supervisor:
         # flags for control flow
         self.exploring = True
 
+        # rescuing animals
+        #self.animal_poses = []
+        #self.num_animals = 0
+        self.animal_poses = [(1.540,0.518),(1.938,2.680),(1.559,1.709)] #TEST
+        self.num_animals = 3 #TEST
+        self.initialized_rescue = False
+
         # create publishers
         self.nav_goal_publisher = rospy.Publisher('/cmd_nav', Pose2D, queue_size=10)
         self.pose_goal_publisher = rospy.Publisher('/cmd_pose', Pose2D, queue_size=10)
         self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        # TODO: add Publisher for ready_to_rescue message
+        self.rescue_ready = rospy.Publisher('/ready_to_rescue', Bool, queue_size=1)
 
         # create subscribers
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
+<<<<<<< HEAD
         # TODO: add Subscriber for rescue_on message: self.rescue_on_callback
+=======
+        rospy.Subscriber('/rescue_on', Bool, self.rescue_on_callback)
+        # TODO: add Subscriber for animal detection: self.animal_detected_callback
+>>>>>>> master
 
         self.trans_listener = tf.TransformListener()
-
-        ##### For animal detection
-        # num. of animals (get updated)
-        self.num_animals = 0
-        self.animal_poses = []
 
         # flag for detection
         self.cat_detected = False
@@ -154,12 +161,11 @@ class Supervisor:
     def rescue_on_callback(self, msg):
         """ callback for when we receive a rescue_on message from the fire station """
 
-        # TODO: not sure about the message type here
-        rescue_on = msg.rescue_on
+        rescue_on = msg.data
 
         if rescue_on and self.mode == Mode.WAIT_FOR_INSTR:
             self.update_waypoint()
-            self.mode = NAV
+            self.mode = Mode.NAV
             # NOTE: update_waypoint needs to happen BEFORE setting exploring to false,
             # otherwise we'll think we're done
             self.exploring = False
@@ -192,10 +198,17 @@ class Supervisor:
         vel_g_msg = Twist()
         self.cmd_vel_publisher.publish(vel_g_msg)
 
-    def close_to(self,x,y,theta):
+    def close_to(self,x,y,theta,eps):
         """ checks if the robot is at a pose within some threshold """
 
-        return (abs(x-self.x)<POS_EPS and abs(y-self.y)<POS_EPS and abs(theta-self.theta)<THETA_EPS)
+        return (abs(x-self.x)<eps and abs(y-self.y)<eps and abs(theta-self.theta)<THETA_EPS)
+
+    def set_goal_pose(self,x,y,theta):
+        """ sets the goal pose """
+        
+        self.x_g = x
+        self.y_g = y
+        self.theta_g = theta
 
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
@@ -222,7 +235,7 @@ class Supervisor:
     def init_rescue(self):
         """ initiates an animal rescue """
 
-        self.rescue_start - rospy.get_rostime()
+        self.rescue_start = rospy.get_rostime()
         self.mode = Mode.RESCUE
 
     def has_rescued(self):
@@ -231,13 +244,48 @@ class Supervisor:
 
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
-        # TODO: publish message
-
+        self.rescue_ready.publish(True)
+        
     def update_waypoint(self):
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
 
-        # TODO: fill me in with useful stuff
+        # update_waypoint should only be called when you are rescuing animals
+        # otherwise this is going to start setting the waypoint to the nearest animal
+        # to rescue and compete with 2D nav in RViz
+        
+        # 1. Find closest unrescued animal
+        # 2. Go to animal
+        # 3. Rescue
+        # 4. Repeat 1-3 until no animals to rescue
+        # 5. Return to firestation
 
+        if not self.initialized_rescue:
+            # initialize boolean array to record which animals have been rescued
+            self.to_rescue = np.ones((self.num_animals), dtype=bool)
+            self.initialized_rescue = True
+
+        if np.any(self.to_rescue):
+            # Iterates through each of the animals and chooses the first one
+            # in the lis that has not been rescued yet.
+            # Because we know that there are 3 animals max to be picked up
+            # this for loop is fine. For any other circumstance this should be
+            # done differently. 
+            animal_dist = np.zeros((self.num_animals))
+            for i in range(self.num_animals):
+                if self.to_rescue[i]:
+                    pose_rescue = self.animal_poses[i]
+                    self.to_rescue[i] = False
+                    break
+                else:
+                    pass
+
+            # Set the goal pose
+            self.set_goal_pose(pose_rescue[0],pose_rescue[1],0.0)
+        else:
+            # Go to the firestation
+            self.set_goal_pose(self.firestation.x,self.firestation.y,self.firestation.theta)
+
+        # Change the mode
         self.mode = Mode.NAV
 
     def loop(self):
@@ -259,6 +307,8 @@ class Supervisor:
             rospy.loginfo("Current Mode: %s", self.mode)
             self.last_mode_printed = self.mode
 
+        print(self.mode)
+
         # checks wich mode it is in and acts accordingly
         if self.mode == Mode.IDLE:
             # send zero velocity
@@ -266,7 +316,7 @@ class Supervisor:
 
         elif self.mode == Mode.POSE:
             # moving towards a desired pose
-            if self.close_to(self.x_g,self.y_g,self.theta_g):
+            if self.close_to(self.x_g,self.y_g,self.theta_g,POS_EPS):
                 self.mode = Mode.IDLE
             else:
                 self.go_to_pose()
@@ -287,20 +337,21 @@ class Supervisor:
 
         elif self.mode == Mode.NAV:
 
-            if self.close_to(self.x_g,self.y_g,self.theta_g):
+            if self.close_to(self.x_g,self.y_g,self.theta_g,POS_EPS):
                 # waypoint reached
 
-                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta):
+                if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,7*POS_EPS):
                     # at firestation
                     if (self.exploring):
                         self.mode = Mode.WAIT_FOR_INSTR
+                        self.wait_for_instr()
                     else:
                         self.mode = IDLE
 
                 else:
                     # non-firestation waypoint reached
                     if (self.exploring):
-                        self.update_waypoint()
+                        pass
                     else:
                         self.init_rescue()
 
@@ -309,7 +360,7 @@ class Supervisor:
                 self.nav_to_pose()
 
         elif self.mode == Mode.WAIT_FOR_INSTR:
-            self.wait_for_instr()
+            pass
 
         elif self.mode == Mode.RESCUE:
             # save the animal!
