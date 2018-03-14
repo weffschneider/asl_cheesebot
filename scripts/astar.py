@@ -142,7 +142,7 @@ class AStar(object):
             x2, y2 = obs[1]
 
             x0, y0 = goal
-            dist = abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1+**2))
+            dist = abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1)**2)
 
             if dist < min_dist:
                 min_dist = dist
