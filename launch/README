@@ -5,4 +5,11 @@ remove rescue_on for demo
 ::gmapping::
 rm gazebo stuff
 
-::nav::
+::cheese_robot::
+Is the cheese master
+
+::cheese_desktop::
+Starts up supervisor.p, pose_controller.py, and rescue_on.py
+
+::cheese_detector::
+Starts up detector.py so that it can initialize and stay that way.
