@@ -1,0 +1,8 @@
+::bringup::
+added supervisor.py, pose_controller.py, navigator.py, detector.py, and rescue_on.py
+remove rescue_on for demo
+
+::gmapping::
+rm gazebo stuff
+
+::nav::
