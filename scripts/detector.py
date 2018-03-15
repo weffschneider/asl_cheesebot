@@ -273,6 +273,10 @@ class Detector:
 
                 print(object_msg.name)
 
+                # displays the camera image (when run on laptop only!)
+                cv2.imshow("Camera", img_bgr8)
+                cv2.waitKey(1)
+
     def camera_info_callback(self, msg):
         """ extracts relevant camera intrinsic parameters from the camera_info message.
         cx, cy are the center of the image in pixel (the principal point), fx and fy are
