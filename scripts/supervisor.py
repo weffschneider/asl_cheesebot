@@ -18,7 +18,12 @@ THETA_EPS = .3
 STOP_TIME = 3
 
 # minimum distance from a stop sign to obey it
-STOP_MIN_DIST = .5
+# (bounding box height in pixels)
+STOP_MIN_DIST = 200
+
+# minimum distance from animal
+# (bounding box height in pixels)
+ANIMAL_MIN_DIST = 200
 
 # time taken to cross an intersection
 CROSSING_TIME = 3
@@ -65,8 +70,8 @@ class Supervisor:
         self.exploring = True
 
         # rescuing animals
-        #self.animal_poses = []
-        self.animal_poses = [(1.4,0.3),(2.16,1.5)] # TEST
+        self.animal_poses = []
+        #self.animal_poses = [(1.4,0.3),(2.16,1.5)] # TEST
         self.initialized_rescue = False
 
         # create publishers
@@ -98,34 +103,30 @@ class Supervisor:
 
         # record the animal's position w.r.t. the robot's pose
         if msg.name == 'cat' and not self.cat_detected:
-            self.animal_poses.append( self.record_animal_frame(msg) )
+            self.animal_poses.append( (self.x, self.y) )
             self.cat_detected = True
+            print('append cat')
 
         elif msg.name == 'dog' and not self.dog_detected:
-            self.animal_poses.append( self.record_animal_frame(msg) )
+            self.animal_poses.append( (self.x, self.y) )
             self.dog_detected = True
+            print('append dog')
+
+        print(self.animal_poses)
 
 
-    def record_animal_frame(self, msg):
-        # OUT : [x, y, theta] of animal position in world frame
+    # def record_animal_frame(self, msg):
+    #     # OUT : [x, y, theta] of animal position in world frame
 
-        # msg type : DetectedObject
-        name = msg.name
-        distance   = msg.distance
-        thetaleft  = msg.thetaleft
-        thetaright = msg.thetaright
+    #     # msg type : DetectedObject
+    #     name = msg.name
+    #     ymin, _, ymax, _ = msg.corners
+    #     height = ymax-ymin
 
-        # animal location in robot's frame
-        theta = (thetaleft + thetaright)/2.0
+    #     # frame name depends on what animal we found
+    #     frame_name = name + "_pose"
 
-        # frame name depends on what animal we found
-        frame_name = name + "_pose"
-
-        # add frame to "animal_pose" from "base_footprint"
-        pose_x = self.x + distance*np.cos(self.theta - theta)
-        pose_y = self.y + distance*np.sin(self.theta - theta)
-
-        return (pose_x, pose_y)
+    #     return (self.x, self.y)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -143,10 +144,12 @@ class Supervisor:
         a distance of 0 can mean that the lidar did not pickup the stop sign at all """
 
         # distance of the stop sign
-        dist = msg.distance
+        # dist = msg.distance
+        ymin, _, ymax, _ = msg.corners
+        height = ymax-ymin
 
         # if close enough and in nav mode, stop
-        if dist > 0 and dist < STOP_MIN_DIST and self.mode == Mode.NAV:
+        if height > 0 and height < STOP_MIN_DIST and self.mode == Mode.NAV:
             self.init_stop_sign()
 
 
@@ -207,6 +210,7 @@ class Supervisor:
         """ initiates a stop sign maneuver """
 
         self.stop_sign_start = rospy.get_rostime()
+        self.stay_idle()
         self.mode = Mode.STOP
 
     def has_stopped(self):
@@ -229,6 +233,7 @@ class Supervisor:
         """ initiates an animal rescue """
 
         self.rescue_start = rospy.get_rostime()
+        self.stay_idle()
         self.mode = Mode.RESCUE
 
     def has_rescued(self):
@@ -237,7 +242,10 @@ class Supervisor:
 
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
+        self.stay_idle()
         self.rescue_ready.publish(True)
+        self.mode = Mode.WAIT_FOR_INSTR
+
 
     def update_waypoint(self):
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
@@ -338,7 +346,6 @@ class Supervisor:
                 if self.close_to(self.firestation_x,self.firestation_y,self.firestation_theta,3*POS_EPS):
                     # at firestation
                     if (self.exploring):
-                        self.mode = Mode.WAIT_FOR_INSTR
                         self.wait_for_instr()
                     else:
                         self.mode = Mode.IDLE
@@ -352,7 +359,7 @@ class Supervisor:
 
             else:
                 # waypoint not yet reached
-                # self.nav_to_pose()
+                self.nav_to_pose()
                 pass
 
         elif self.mode == Mode.WAIT_FOR_INSTR:

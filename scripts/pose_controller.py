@@ -14,10 +14,10 @@ K2 = 0.8
 K3 = 0.8
 
 # maximum velocity
-V_MAX = 0.25
+V_MAX = 0.02
 
 # maximim angular velocity
-W_MAX = 2
+W_MAX = 0.5
 
 class PoseController:
 

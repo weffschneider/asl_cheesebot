@@ -29,10 +29,10 @@ THETA_START_THRESH = 0.09
 THETA_START_P = 1
 
 # maximum velocity
-V_MAX = .2
+V_MAX = .05
 
 # maximim angular velocity
-W_MAX = .4
+W_MAX = .1
 
 # desired crusing velocity
 V_DES = 0.12
