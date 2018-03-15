@@ -8,7 +8,6 @@
     <node pkg="tf" type="static_transform_publisher" name="velodyne_broadcaster" args="-0.04 0 0.19 0 0 0 1 base_footprint velodyne 100" />
 
 
-
     <arg name="model" default="burger" doc="model type [burger, waffle]"/>
     <arg name="x_pos" default="0.0"/>
     <arg name="y_pos" default="0.0"/>
