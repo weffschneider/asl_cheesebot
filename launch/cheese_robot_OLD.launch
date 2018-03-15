@@ -1,14 +1,25 @@
 <launch>
-    <arg name="camera_fps" default="5" />
-
     <include file="$(find turtlebot3_bringup)/launch/turtlebot3_core.launch" />
     <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch" />
-    <include file="$(find asl_turtlebot)/launch/raspicam_camerav2_410x308_variable_fps.launch">
-        <arg name="camera_fps" value="$(arg camera_fps)" />
-    </include>
+    <include file="$(find raspicam_node)/launch/camerav2_410x308_30fps.launch" />
     <node pkg="asl_turtlebot" type="tb3_image_rotate_and_crop.py" name="image_rotater" />
     <node pkg="tf" type="static_transform_publisher" name="camera_true_broadcaster" args="0.03 0 0.067 0.707107 0 0.707107 0 base_footprint raspicam 100" />
     <node pkg="tf" type="static_transform_publisher" name="camera_broadcaster" args="0 0 0 0 0 0.707107 0.707107 raspicam camera 100" />
     <node pkg="tf" type="static_transform_publisher" name="velodyne_broadcaster" args="-0.04 0 0.19 0 0 0 1 base_footprint velodyne 100" />
-    
+
+
+    <arg name="model" default="burger" doc="model type [burger, waffle]"/>
+    <arg name="x_pos" default="0.0"/>
+    <arg name="y_pos" default="0.0"/>
+    <arg name="z_pos" default="0.0"/>
+    <arg name="gui" default="false"/>
+
+    <param name="robot_description" command="$(find xacro)/xacro.py $(find asl_turtlebot)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+        <param name="publish_frequency" type="double" value="10.0" />
+    </node>
+
+
+
 </launch>

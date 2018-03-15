@@ -371,4 +371,10 @@ class Supervisor:
 if __name__ == '__main__':
     sup = Supervisor()
     sup.run()
+<<<<<<< HEAD
 
+=======
+    
+    
+    
+>>>>>>> e67f58a17f5fbac0ebbdddfdac51e030c3cc2a0f
