@@ -15,17 +15,17 @@ POS_EPS = .1
 THETA_EPS = .3
 
 # time to stop at a stop sign
-STOP_TIME = 3
+STOP_TIME = 10
 
 # minimum distance from a stop sign to obey it
 # (bounding box height in pixels)
 STOP_MIN_HEIGHT = 60
 
 # time taken to cross an intersection
-CROSSING_TIME = 3
+CROSSING_TIME = 10
 
 # time to stop for animal rescue
-RESCUE_TIME = 3
+RESCUE_TIME = 10
 
 # state machine modes, not all implemented
 class Mode(Enum):
