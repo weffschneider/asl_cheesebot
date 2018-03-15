@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from gazebo_msgs.msg import ModelStates
+# from gazebo_msgs.msg import ModelStates
 from std_msgs.msg import Float32MultiArray, String, Bool
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from asl_turtlebot.msg import DetectedObject
@@ -388,4 +388,4 @@ class Supervisor:
 if __name__ == '__main__':
     sup = Supervisor()
     sup.run()
-like
+
