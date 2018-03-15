@@ -84,12 +84,12 @@ class Detector:
             # uses MobileNet to detect objects in images
             # this works well in the real world, but requires
             # good computational resources
-            print('before')
+            print('begin tensor flow nonsense')
             with self.detection_graph.as_default():
                 (boxes, scores, classes, num) = self.sess.run(
                 [self.d_boxes,self.d_scores,self.d_classes,self.num_d],
                 feed_dict={self.image_tensor: image_np_expanded})
-            print('after')
+            print('done! ready to detect')
 
             return self.filter(boxes[0], scores[0], classes[0], num[0])
 

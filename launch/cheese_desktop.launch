@@ -4,8 +4,8 @@
     <node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator" />
     <node pkg="asl_turtlebot" type="rescue_on_test_sim.py" name="rescue_monitor" />
     
-    
-    <node pkg="gmapping" type="slam_gmapping" name="turtlebot3_slam_gmapping" output="screen">
+
+    <node pkg="gmapping" type="slam_gmapping" name="turtlebot3_slam_gmapping" >
         <param name="base_frame" value="base_footprint"/>
         <param name="odom_frame" value="odom"/>
         <param name="map_update_interval" value="2.0"/>
