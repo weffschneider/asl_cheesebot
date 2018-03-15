@@ -201,6 +201,7 @@ class Detector:
         try:
             img = self.bridge.compressed_imgmsg_to_cv2(msg, "passthrough")
             img_bgr8 = self.bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
+
         except CvBridgeError as e:
             print(e)
 
@@ -212,6 +213,9 @@ class Detector:
         # runs object detection in the image
         (boxes, scores, classes, num) = self.run_detection(img)
 
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        print(num)
+        
         if num > 0:
             # some objects were detected
             for (box,sc,cl) in zip(boxes, scores, classes):
@@ -223,7 +227,7 @@ class Detector:
                 ycen = int(0.5*(ymax-ymin)+ymin)
 
                 cv2.rectangle(img_bgr8, (xmin,ymin), (xmax,ymax), (255,0,0), 2)
-
+                
                 # computes the vectors in camera frame corresponding to each sides of the box
                 rayleft = self.project_pixel_to_ray(xmin,ycen)
                 rayright = self.project_pixel_to_ray(xmax,ycen)
@@ -254,9 +258,7 @@ class Detector:
                 object_msg.corners = [ymin,xmin,ymax,xmax]
                 self.object_publishers[cl].publish(object_msg)
 
-        # displays the camera image
-        cv2.imshow("Camera", img_bgr8)
-        cv2.waitKey(1)
+                print(object_msg.name)
 
     def camera_info_callback(self, msg):
         """ extracts relevant camera intrinsic parameters from the camera_info message.

@@ -181,7 +181,7 @@ class Supervisor:
         nav_g_msg.x = self.x_g
         nav_g_msg.y = self.y_g
         nav_g_msg.theta = self.theta_g
-
+        
         self.nav_goal_publisher.publish(nav_g_msg)
 
     def stay_idle(self):
@@ -302,8 +302,6 @@ class Supervisor:
             rospy.loginfo("Current Mode: %s", self.mode)
             self.last_mode_printed = self.mode
 
-        print(self.mode)
-
         # checks which mode it is in and acts accordingly
         if self.mode == Mode.IDLE:
             # send zero velocity
@@ -354,7 +352,8 @@ class Supervisor:
 
             else:
                 # waypoint not yet reached
-                self.nav_to_pose()
+                # self.nav_to_pose()
+                pass
 
         elif self.mode == Mode.WAIT_FOR_INSTR:
             pass
