@@ -24,6 +24,8 @@ class AStar(object):
 
         self.path = None        # the final path as a list of states
 
+        self.dist_from_wall = 1.0 # distance from wall to keep
+
     # Checks if a give state is free, meaning it is inside the bounds of the map and
     # is not inside any obstacle
     # INPUT: (x)
@@ -102,15 +104,57 @@ class AStar(object):
             current = path[-1]
         return list(reversed(path))
 
+
+    def fix_animal_position(self, eps):
+
+        goal = self.x_goal
+
+        # find the wall closest to the goal position
+        closest_line = None
+        min_dist = 1000
+
+        for obs in self.occupancy.obstacles:
+
+            x1, y1 = obs[0]
+            x2, y2 = obs[1]
+
+            x0, y0 = goal
+            dist = abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1)**2)
+
+            if dist < min_dist:
+                min_dist = dist
+                closest_line = obs
+
+        # Find slope of wall and a line perpendicular to the wall
+        x1, y1 = obs[0]
+        x2, y2 = obs[1]
+
+        slope_wall = (y2-y1)/(x2-x1)
+        slope_line = (1.,-1./slope_wall)
+
+        # normalize slope_line, and add the line scaled by
+        # (min_dist + eps), which gives new goal
+        norm_line = np.norm(slope_line)
+
+
+        new_goal = goal + slope_line/norm_line*(min_dist + eps)
+        return new_goal
+
+>>>>>>> master
     # Solves the planning problem using the A* search algorithm. It places
     # the solution as a list of of tuples (each representing a state) that go
     # from self.x_init to self.x_goal inside the variable self.path
     # INPUT: None
     # OUTPUT: Boolean, True if a solution from x_init to x_goal was found
     def solve(self):
+
+        # animal position is most likely beyond the wall
+        if not self.is_free(x_goal):
+            self.x_goal = self.fix_animal_position(self.dist_from_wall)
+
         while len(self.open_set)>0:
             x_curr = self.find_best_f_score()
-            
+
             if x_curr == self.x_goal:
                 self.path = self.reconstruct_path()
                 return True
@@ -121,9 +165,9 @@ class AStar(object):
             for x_neigh in self.get_neighbors(x_curr):
                 if x_neigh in self.closed_set:
                     continue
-                
+
                 tentative_g_score = self.g_score[x_curr] + self.distance(x_curr, x_neigh)
-                
+
                 if x_neigh not in self.open_set:
                     self.open_set.append(x_neigh)
                 elif (tentative_g_score > self.g_score[x_neigh]):
@@ -152,5 +196,3 @@ class DetOccupancyGrid2D(object):
             if inside:
                 return False
         return True
-
-

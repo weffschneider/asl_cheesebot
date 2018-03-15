@@ -82,11 +82,11 @@ class Supervisor:
         # TODO: add Subscriber for animal detection: self.animal_detected_callback
 
         self.trans_listener = tf.TransformListener()
-        # TODO: publish animal locations to transform tree
 
         # flag for detection
         self.cat_detected = False
         self.dog_detected = False
+        self.sign_detected = False
 
         # detector labels in tfmodels/coco_labels.txt
         # published by "camera_common" in "detector.py"
@@ -105,6 +105,7 @@ class Supervisor:
             self.animal_poses.append( self.record_animal_frame(msg) )
             self.dog_detected = True
 
+
     def record_animal_frame(self, msg):
         # OUT : [x, y, theta] of animal position in world frame
 
@@ -121,21 +122,10 @@ class Supervisor:
         frame_name = name + "_pose"
 
         # add frame to "animal_pose" from "base_footprint"
-        br = tf.TransformBroadcaster()
-        br.sendTransform( (distance*np.cos(theta), distance*np.sin(theta), theta),
-                          (0., 0., 0., 1.),
-                          rospy.Time.now(),
-                          frame_name,
-                          "base_footprint")
+        pose_x = self.x + distance*np.cos(self.theta - theta)
+        pose_y = self.y + distance*np.sin(self.theta - theta)
 
-        # get position in world frame
-        try:
-            trans_ = self.trans_listener.lookupTransform('/map', frame_name, rospy.Time(0))
-            animal_pose = (trans[0], trans_[1])
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            pass
-
-            return animal_pose
+        return (pose_x, pose_y)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -158,6 +148,7 @@ class Supervisor:
         # if close enough and in nav mode, stop
         if dist > 0 and dist < STOP_MIN_DIST and self.mode == Mode.NAV:
             self.init_stop_sign()
+
 
     def rescue_on_callback(self, msg):
         """ callback for when we receive a rescue_on message from the fire station """
@@ -207,7 +198,7 @@ class Supervisor:
 
     def set_goal_pose(self,x,y,theta):
         """ sets the goal pose """
-        
+
         self.x_g = x
         self.y_g = y
         self.theta_g = theta
@@ -247,14 +238,14 @@ class Supervisor:
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
         self.rescue_ready.publish(True)
-        
+
     def update_waypoint(self):
         # Update goal pose (x_g, y_g, theta_g), then switch to NAV mode to get there
 
         # update_waypoint should only be called when you are rescuing animals
         # otherwise this is going to start setting the waypoint to the nearest animal
         # to rescue and compete with 2D nav in RViz
-        
+
         # 1. Find closest unrescued animal
         # 2. Go to animal
         # 3. Rescue
@@ -262,7 +253,7 @@ class Supervisor:
         # 5. Return to firestation
 
         num_animals = len(self.animal_poses)
-        
+
         if not self.initialized_rescue:
             # initialize boolean array to record which animals have been rescued
             self.to_rescue = np.ones(num_animals, dtype=bool)
@@ -273,7 +264,7 @@ class Supervisor:
             # in the lis that has not been rescued yet.
             # Because we know that there are 3 animals max to be picked up
             # this for loop is fine. For any other circumstance this should be
-            # done differently. 
+            # done differently.
             animal_dist = np.zeros(num_animals)
             for i in range(num_animals):
                 if self.to_rescue[i]:
