@@ -54,8 +54,8 @@ class Supervisor:
         self.theta_g = 0
 
         # TODO: hard coded for now
-        self.firestation_x = 3.3
-        self.firestation_y = 1.5
+        self.firestation_x = 0
+        self.firestation_y = 0
         self.firestation_theta = 0
 
         # current mode
