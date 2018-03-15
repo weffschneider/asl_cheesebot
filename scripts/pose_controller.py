@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Twist, PoseArray, Pose2D
 from std_msgs.msg import Float32MultiArray, String
 import tf
@@ -15,10 +14,10 @@ K2 = 0.8
 K3 = 0.8
 
 # maximum velocity
-V_MAX = 0.25
+V_MAX = 0.02
 
 # maximim angular velocity
-W_MAX = 2
+W_MAX = 0.5
 
 class PoseController:
 

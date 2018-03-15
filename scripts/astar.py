@@ -1,6 +1,4 @@
 import numpy as np
-# import matplotlib.pyplot as plt
-# import matplotlib.patches as patches
 
 # Represents a motion planning problem to be solved using A*
 class AStar(object):
@@ -106,62 +104,41 @@ class AStar(object):
             current = path[-1]
         return list(reversed(path))
 
-    # Plots the path found in self.path and the obstacles
-    # # INPUT: None
-    # # OUTPUT: None
-    # def plot_path(self):
-    #     if not self.path:
-    #         return
-    #
-    #     fig = plt.figure()
-    #
-    #     self.occupancy.plot(fig.number)
-    #
-    #     solution_path = np.array(self.path) * self.resolution
-    #     plt.plot(solution_path[:,0],solution_path[:,1], color="green", linewidth=2, label="solution path", zorder=10)
-    #     plt.scatter([self.x_init[0]*self.resolution, self.x_goal[0]*self.resolution], [self.x_init[1]*self.resolution, self.x_goal[1]*self.resolution], color="green", s=30, zorder=10)
-    #     plt.annotate(r"$x_{init}$", np.array(self.x_init)*self.resolution + np.array([.2, 0]), fontsize=16)
-    #     plt.annotate(r"$x_{goal}$", np.array(self.x_goal)*self.resolution + np.array([.2, 0]), fontsize=16)
-    #     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.03), fancybox=True, ncol=3)
-    #
-    #     plt.axis('equal')
-    #     plt.show()
+
+    # def fix_animal_position(self, eps):
+
+    #     goal = self.x_goal
+
+    #     # find the wall closest to the goal position
+    #     closest_line = None
+    #     min_dist = 1000
+
+    #     for obs in self.occupancy.obstacles:
+
+    #         x1, y1 = obs[0]
+    #         x2, y2 = obs[1]
+
+    #         x0, y0 = goal
+    #         dist = abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1)**2)
+
+    #         if dist < min_dist:
+    #             min_dist = dist
+    #             closest_line = obs
+
+    #     # Find slope of wall and a line perpendicular to the wall
+    #     x1, y1 = obs[0]
+    #     x2, y2 = obs[1]
+
+    #     slope_wall = (y2-y1)/(x2-x1)
+    #     slope_line = (1.,-1./slope_wall)
+
+    #     # normalize slope_line, and add the line scaled by
+    #     # (min_dist + eps), which gives new goal
+    #     norm_line = np.norm(slope_line)
 
 
-    def fix_animal_position(self, eps):
-
-        goal = self.x_goal
-
-        # find the wall closest to the goal position
-        closest_line = None
-        min_dist = 1000
-
-        for obs in self.occupancy.obstacles:
-
-            x1, y1 = obs[0]
-            x2, y2 = obs[1]
-
-            x0, y0 = goal
-            dist = abs((y2-y1)*x0 - (x2-x1)*y0 + x2*y1 - y2*x1)/np.sqrt((y2-y1)**2 + (x2-x1)**2)
-
-            if dist < min_dist:
-                min_dist = dist
-                closest_line = obs
-
-        # Find slope of wall and a line perpendicular to the wall
-        x1, y1 = obs[0]
-        x2, y2 = obs[1]
-
-        slope_wall = (y2-y1)/(x2-x1)
-        slope_line = (1.,-1./slope_wall)
-
-        # normalize slope_line, and add the line scaled by
-        # (min_dist + eps), which gives new goal
-        norm_line = np.norm(slope_line)
-
-
-        new_goal = goal + slope_line/norm_line*(min_dist + eps)
-        return new_goal
+    #     new_goal = goal + slope_line/norm_line*(min_dist + eps)
+    #     return new_goal
 
     # Solves the planning problem using the A* search algorithm. It places
     # the solution as a list of of tuples (each representing a state) that go
@@ -171,8 +148,8 @@ class AStar(object):
     def solve(self):
 
         # animal position is most likely beyond the wall
-        if not self.is_free(x_goal):
-            self.x_goal = self.fix_animal_position(self.dist_from_wall)
+        # if not self.is_free(self.x_goal):
+        #     self.x_goal = self.fix_animal_position(self.dist_from_wall)
 
         while len(self.open_set)>0:
             x_curr = self.find_best_f_score()
@@ -218,50 +195,3 @@ class DetOccupancyGrid2D(object):
             if inside:
                 return False
         return True
-    #
-    # def plot(self, fig_num=0):
-    #     fig = plt.figure(fig_num)
-    #     for obs in self.obstacles:
-    #         ax = fig.add_subplot(111, aspect='equal')
-    #         ax.add_patch(
-    #         patches.Rectangle(
-    #         obs[0],
-    #         obs[1][0]-obs[0][0],
-    #         obs[1][1]-obs[0][1],))
-
-### TESTING
-
-# # A simple example
-# width = 10
-# height = 10
-# x_init = (0,0)
-# x_goal = (8,8)
-# obstacles = [((6,6),(8,7)),((2,1),(4,2)),((2,4),(4,6)),((6,2),(8,4))]
-# occupancy = DetOccupancyGrid2D(width, height, obstacles)
-
-# A large random example
-# width = 101
-# height = 101
-# num_obs = 10
-# min_size = 5
-# max_size = 25
-# obs_corners_x = np.random.randint(0,width,num_obs)
-# obs_corners_y = np.random.randint(0,height,num_obs)
-# obs_lower_corners = np.vstack([obs_corners_x,obs_corners_y]).T
-# obs_sizes = np.random.randint(min_size,max_size,(num_obs,2))
-# obs_upper_corners = obs_lower_corners + obs_sizes
-# obstacles = zip(obs_lower_corners,obs_upper_corners)
-# occupancy = DetOccupancyGrid2D(width, height, obstacles)
-# x_init = tuple(np.random.randint(0,width-2,2).tolist())
-# x_goal = tuple(np.random.randint(0,height-2,2).tolist())
-# while not (occupancy.is_free(x_init) and occupancy.is_free(x_goal)):
-#     x_init = tuple(np.random.randint(0,width-2,2).tolist())
-#     x_goal = tuple(np.random.randint(0,height-2,2).tolist())
-#
-# astar = AStar((0, 0), (width, height), x_init, x_goal, occupancy)
-#
-# if not astar.solve():
-#     print "No path found"
-#     exit(0)
-#
-# astar.plot_path()

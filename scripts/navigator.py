@@ -2,7 +2,7 @@
 
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
-from gazebo_msgs.msg import ModelStates
+# from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from std_msgs.msg import Float32MultiArray, String
 import tf
@@ -12,7 +12,7 @@ from utils import wrapToPi
 from astar import AStar
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 
 # threshold at which navigator switches
@@ -29,10 +29,10 @@ THETA_START_THRESH = 0.09
 THETA_START_P = 1
 
 # maximum velocity
-V_MAX = .2
+V_MAX = .05
 
 # maximim angular velocity
-W_MAX = .4
+W_MAX = .1
 
 # desired crusing velocity
 V_DES = 0.12

@@ -2,7 +2,6 @@
 
 
 import rospy
-from gazebo_msgs.msg import ModelStates
 from std_msgs.msg import Float32MultiArray, String, Bool
 
 
