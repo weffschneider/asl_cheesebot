@@ -19,11 +19,7 @@ STOP_TIME = 3
 
 # minimum distance from a stop sign to obey it
 # (bounding box height in pixels)
-STOP_MIN_DIST = 200
-
-# minimum distance from animal
-# (bounding box height in pixels)
-ANIMAL_MIN_DIST = 200
+STOP_MIN_HEIGHT = 60
 
 # time taken to cross an intersection
 CROSSING_TIME = 3
@@ -149,7 +145,7 @@ class Supervisor:
         height = ymax-ymin
 
         # if close enough and in nav mode, stop
-        if height > 0 and height < STOP_MIN_DIST and self.mode == Mode.NAV:
+        if height > STOP_MIN_HEIGHT and self.mode == Mode.NAV:
             self.init_stop_sign()
 
 
