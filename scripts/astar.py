@@ -3,7 +3,7 @@ import numpy as np
 # Represents a motion planning problem to be solved using A*
 class AStar(object):
 
-    def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, occupancy, resolution=1):
+    def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, occupancy, resolution):
         self.statespace_lo = statespace_lo         # state space lower bound (e.g., (-5, -5))
         self.statespace_hi = statespace_hi         # state space upper bound (e.g., (5, 5))
         self.occupancy = occupancy                 # occupancy grid

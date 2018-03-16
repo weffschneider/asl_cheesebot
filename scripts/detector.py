@@ -84,12 +84,12 @@ class Detector:
             # uses MobileNet to detect objects in images
             # this works well in the real world, but requires
             # good computational resources
-            print('begin tensor flow nonsense')
+            # print('begin tensor flow nonsense')
             with self.detection_graph.as_default():
                 (boxes, scores, classes, num) = self.sess.run(
                 [self.d_boxes,self.d_scores,self.d_classes,self.num_d],
                 feed_dict={self.image_tensor: image_np_expanded})
-            print('done! ready to detect')
+            # print('done! ready to detect')
 
             return self.filter(boxes[0], scores[0], classes[0], num[0])
 
@@ -217,7 +217,7 @@ class Detector:
 
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         print(num)
-        
+
         if num > 0:
             # some objects were detected
             for (box,sc,cl) in zip(boxes, scores, classes):
@@ -237,7 +237,7 @@ class Detector:
 
 
                 cv2.rectangle(img_bgr8, (xmin,ymin), (xmax,ymax), (255,0,0), 2)
-                
+
                 # computes the vectors in camera frame corresponding to each sides of the box
                 rayleft = self.project_pixel_to_ray(xmin,ycen)
                 rayright = self.project_pixel_to_ray(xmax,ycen)

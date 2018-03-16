@@ -5,7 +5,7 @@ from std_msgs.msg import Bool
 class RescueTest:
 
     def __init__(self):
-        rospy.init_node('rescuers_down_under_mate', anonymous=True)
+        rospy.init_node('rescue_monitor', anonymous=True)
         rospy.Subscriber('ready_to_rescue', Bool, self.rescue_callback)
         self.rescuing = False
         self.rescue_pub = rospy.Publisher('rescue_on', Bool, queue_size=10)
