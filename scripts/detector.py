@@ -84,12 +84,10 @@ class Detector:
             # uses MobileNet to detect objects in images
             # this works well in the real world, but requires
             # good computational resources
-            # print('begin tensor flow nonsense')
             with self.detection_graph.as_default():
                 (boxes, scores, classes, num) = self.sess.run(
                 [self.d_boxes,self.d_scores,self.d_classes,self.num_d],
                 feed_dict={self.image_tensor: image_np_expanded})
-            # print('done! ready to detect')
 
             return self.filter(boxes[0], scores[0], classes[0], num[0])
 
@@ -215,9 +213,6 @@ class Detector:
         # runs object detection in the image
         (boxes, scores, classes, num) = self.run_detection(img)
 
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print(num)
-
         if num > 0:
             # some objects were detected
             for (box,sc,cl) in zip(boxes, scores, classes):
@@ -253,9 +248,6 @@ class Detector:
                 # estimate the corresponding distance using the lidar
                 dist = self.estimate_distance(thetaleft,thetaright,img_laser_ranges)
 
-		print('height:')
-		print(ymax-ymin)
-
                 if not self.object_publishers.has_key(cl):
                     self.object_publishers[cl] = rospy.Publisher('/detector/'+self.object_labels[cl],
                         DetectedObject, queue_size=10)
@@ -271,6 +263,9 @@ class Detector:
                 object_msg.corners = [ymin,xmin,ymax,xmax]
                 self.object_publishers[cl].publish(object_msg)
 
+                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                print(num)
+                print('height: ' + str(ymax-ymin))
                 print(object_msg.name)
 
                 # displays the camera image (when run on laptop only!)

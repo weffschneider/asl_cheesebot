@@ -196,6 +196,10 @@ class Supervisor:
         """ sends zero velocity to stay put """
 
         vel_g_msg = Twist()
+        vel_g_msg.linear.x = 0
+        vel_g_msg.linear.y = 0
+        vel_g_msg.angular.z = 0
+
         self.cmd_vel_publisher.publish(vel_g_msg)
 
     def close_to(self,x,y,theta,eps):
@@ -339,7 +343,7 @@ class Supervisor:
             if self.has_stopped():
                 self.init_crossing()
             else:
-                pass
+                self.stay_idle()
 
         elif self.mode == Mode.CROSS:
             # crossing an intersection
