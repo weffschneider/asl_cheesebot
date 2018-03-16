@@ -2,7 +2,7 @@
     <node pkg="asl_turtlebot" type="supervisor.py" name="turtlebot_supervisor" output="screen"/>
     <node pkg="asl_turtlebot" type="pose_controller.py" name="turtlebot_pose_controller" />
     <node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator" />
-    <node pkg="asl_turtlebot" type="rescue_on_test_sim.py" name="rescue_monitor" />
+    <node pkg="asl_turtlebot" type="rescue_test.py" name="rescue_monitor" />
   
 
 </launch>

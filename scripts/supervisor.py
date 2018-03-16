@@ -279,7 +279,7 @@ class Supervisor:
 
         if np.any(self.to_rescue):
             # Iterates through each of the animals and chooses the first one
-            # in the lis that has not been rescued yet.
+            # in the list that has not been rescued yet.
             # Because we know that there are 3 animals max to be picked up
             # this for loop is fine. For any other circumstance this should be
             # done differently.
@@ -292,12 +292,11 @@ class Supervisor:
                 else:
                     pass
 
-            # Set the goal pose
+           # Set the goal pose
             self.set_goal_pose(pose_rescue[0],pose_rescue[1],0.0)
         else:
             # Go to the firestation
             self.set_goal_pose(self.firestation_x,self.firestation_y,self.firestation_theta)
-
         print("Waypoint Updated")
 
         # Change the mode
@@ -362,7 +361,10 @@ class Supervisor:
                     if (self.exploring):
                         self.wait_for_instr()
                     else:
-                        self.mode = Mode.IDLE
+                        if np.any(self.to_rescue):
+                            self.init_rescue()
+                        else:
+                            self.mode = Mode.IDLE
 
                 else:
                     # non-firestation waypoint reached
