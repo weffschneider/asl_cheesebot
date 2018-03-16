@@ -87,16 +87,20 @@ class Supervisor:
         # flag for detection
         self.cat_detected = False
         self.dog_detected = False
+        self.elephant_detected = False
         self.sign_detected = False
 
         # detector labels in tfmodels/coco_labels.txt
         # published by "camera_common" in "detector.py"
         rospy.Subscriber('/detector/cat', DetectedObject, self.animal_detected_callback)
         rospy.Subscriber('/detector/dog', DetectedObject, self.animal_detected_callback)
+        rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
 
     def animal_detected_callback(self, msg):
-        # call back for when the detector has found an animal - cat or dog -
+        # call back for when the detector has found an animal - cat, dog, or elephant
 
+        print(str(msg.name) + ' detected')
+        
         # record the animal's position w.r.t. the robot's pose
         if msg.name == 'cat' and not self.cat_detected:
             self.animal_poses.append( (self.x, self.y) )
@@ -108,7 +112,10 @@ class Supervisor:
             self.dog_detected = True
             print('append dog')
 
-        print(self.animal_poses)
+        elif msg.name == 'elephant' and not self.elephant_detected:
+            self.animal_poses.append( (self.x, self.y) )
+            self.elephant_detected = True
+            print('append elephant')
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
