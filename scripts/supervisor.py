@@ -87,7 +87,6 @@ class Supervisor:
         self.cat_detected = False
         self.dog_detected = False
         self.elephant_detected = False
-        self.sign_detected = False
 
         # detector labels in tfmodels/coco_labels.txt
         # published by "camera_common" in "detector.py"
@@ -173,7 +172,7 @@ class Supervisor:
         nav_g_msg.x = self.x_g
         nav_g_msg.y = self.y_g
         nav_g_msg.theta = self.theta_g
-        
+
         self.nav_goal_publisher.publish(nav_g_msg)
 
     def stay_idle(self):
@@ -300,6 +299,7 @@ class Supervisor:
 
         # logs the current mode
         if not(self.last_mode_printed == self.mode):
+            print('-----------------Current Mode----------------')
             rospy.loginfo("Current Mode: %s", self.mode)
             self.last_mode_printed = self.mode
 

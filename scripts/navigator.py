@@ -29,7 +29,7 @@ THETA_START_THRESH = 0.09
 THETA_START_P = 1
 
 # maximum velocity
-V_MAX = .1
+V_MAX = .05
 
 # maximim angular velocity
 W_MAX = .1
@@ -111,7 +111,7 @@ class Navigator:
                                                   self.map_height,
                                                   self.map_origin[0],
                                                   self.map_origin[1],
-                                                  8,
+                                                  6,
                                                   self.map_probs)
             self.occupancy_updated = True
 
