@@ -80,7 +80,6 @@ class Supervisor:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
         rospy.Subscriber('/rescue_on', Bool, self.rescue_on_callback)
-        # TODO: add Subscriber for animal detection: self.animal_detected_callback
 
         self.trans_listener = tf.TransformListener()
 
@@ -101,21 +100,22 @@ class Supervisor:
 
         print(str(msg.name) + ' detected')
         
-        # record the animal's position w.r.t. the robot's pose
-        if msg.name == 'cat' and not self.cat_detected:
-            self.animal_poses.append( (self.x, self.y) )
-            self.cat_detected = True
-            print('append cat')
+        if self.exploring:
+            # record the animal's position w.r.t. the robot's pose
+            if msg.name == 'cat' and not self.cat_detected:
+                self.animal_poses.append( (self.x, self.y) )
+                self.cat_detected = True
+                print('append cat')
 
-        elif msg.name == 'dog' and not self.dog_detected:
-            self.animal_poses.append( (self.x, self.y) )
-            self.dog_detected = True
-            print('append dog')
+            elif msg.name == 'dog' and not self.dog_detected:
+                self.animal_poses.append( (self.x, self.y) )
+                self.dog_detected = True
+                print('append dog')
 
-        elif msg.name == 'elephant' and not self.elephant_detected:
-            self.animal_poses.append( (self.x, self.y) )
-            self.elephant_detected = True
-            print('append elephant')
+            elif msg.name == 'elephant' and not self.elephant_detected:
+                self.animal_poses.append( (self.x, self.y) )
+                self.elephant_detected = True
+                print('append elephant')
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
