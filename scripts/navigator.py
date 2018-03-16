@@ -29,7 +29,7 @@ THETA_START_THRESH = 0.09
 THETA_START_P = 1
 
 # maximum velocity
-V_MAX = .05
+V_MAX = .75
 
 # maximim angular velocity
 W_MAX = .3
@@ -111,7 +111,7 @@ class Navigator:
                                                   self.map_height,
                                                   self.map_origin[0],
                                                   self.map_origin[1],
-                                                  8,
+                                                  7,
                                                   self.map_probs)
             self.occupancy_updated = True
 
@@ -127,6 +127,52 @@ class Navigator:
             snapped_start = self.snap_to_grid(self.current_plan_start_loc)
             return (abs(snapped_current[0]-snapped_start[0])<START_POS_THRESH and abs(snapped_current[1]-snapped_start[1])<START_POS_THRESH)
         return False
+
+
+    def escape_protocol(self, x, th):
+
+        speed = .5
+        turn = 1
+
+        try:
+            pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
+
+            target_speed = 0
+            target_turn = 0
+            control_speed = 0
+            control_turn = 0
+
+            target_speed = speed * x
+            target_turn = turn * th
+
+            if target_speed > control_speed:
+                control_speed = min( target_speed, control_speed + 0.02 )
+            elif target_speed < control_speed:
+                control_speed = max( target_speed, control_speed - 0.02 )
+            else:
+                control_speed = target_speed
+
+            if target_turn > control_turn:
+                control_turn = min( target_turn, control_turn + 0.1 )
+            elif target_turn < control_turn:
+                control_turn = max( target_turn, control_turn - 0.1 )
+            else:
+                control_turn = target_turn
+
+            twist = Twist()
+            twist.linear.x = control_speed; twist.linear.y = 0; twist.linear.z = 0
+            twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = control_turn
+            pub.publish(twist)
+
+        except Exception as e:
+            print(e)
+
+        finally:
+            twist = Twist()
+            twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+            twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+            pub.publish(twist)
+
 
     def run_navigator(self):
         """ computes a path from current state to goal state using A* and sends it to the path controller """
@@ -217,6 +263,7 @@ class Navigator:
                     rospy.logwarn("Navigator: Path too short, not updating")
             else:
                 rospy.logwarn("Navigator: Could not find path")
+                self.escape_protocol(-3, 0)
                 self.current_plan = []
 
         # if we have a path, execute it (we need at least 3 points for this controller)
