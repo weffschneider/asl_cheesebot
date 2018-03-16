@@ -19,10 +19,10 @@ STOP_TIME = 10
 
 # minimum distance from a stop sign to obey it
 # (bounding box height in pixels)
-STOP_MIN_HEIGHT = 60
+STOP_MIN_HEIGHT = 50
 
 # time taken to cross an intersection
-CROSSING_TIME = 10
+CROSSING_TIME = 15
 
 # time to stop for animal rescue
 RESCUE_TIME = 10
