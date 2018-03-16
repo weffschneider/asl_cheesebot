@@ -32,7 +32,7 @@ THETA_START_P = 1
 V_MAX = .05
 
 # maximim angular velocity
-W_MAX = .1
+W_MAX = .3
 
 # desired crusing velocity
 V_DES = 0.12
@@ -111,7 +111,7 @@ class Navigator:
                                                   self.map_height,
                                                   self.map_origin[0],
                                                   self.map_origin[1],
-                                                  6,
+                                                  8,
                                                   self.map_probs)
             self.occupancy_updated = True
 

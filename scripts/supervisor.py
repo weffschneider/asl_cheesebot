@@ -19,7 +19,7 @@ STOP_TIME = 10
 
 # minimum distance from a stop sign to obey it
 # (bounding box height in pixels)
-STOP_MIN_HEIGHT = 40
+STOP_MIN_HEIGHT = 60
 
 # time taken to cross an intersection
 CROSSING_TIME = 10
@@ -80,6 +80,7 @@ class Supervisor:
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
         rospy.Subscriber('/rescue_on', Bool, self.rescue_on_callback)
+        # TODO: add Subscriber for animal detection: self.animal_detected_callback
 
         self.trans_listener = tf.TransformListener()
 
@@ -92,29 +93,45 @@ class Supervisor:
         # published by "camera_common" in "detector.py"
         rospy.Subscriber('/detector/cat', DetectedObject, self.animal_detected_callback)
         rospy.Subscriber('/detector/dog', DetectedObject, self.animal_detected_callback)
-        rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
+	rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
 
     def animal_detected_callback(self, msg):
-        # call back for when the detector has found an animal - cat, dog, or elephant
+        # call back for when the detector has found an animal - cat or dog -
 
-        print(str(msg.name) + ' detected')
-        
-        if self.exploring:
-            # record the animal's position w.r.t. the robot's pose
-            if msg.name == 'cat' and not self.cat_detected:
-                self.animal_poses.append( (self.x, self.y) )
-                self.cat_detected = True
-                print('append cat')
+        print('-------------------Detecting-----------------')
 
-            elif msg.name == 'dog' and not self.dog_detected:
-                self.animal_poses.append( (self.x, self.y) )
-                self.dog_detected = True
-                print('append dog')
+        # record the animal's position w.r.t. the robot's pose
+        if msg.name == 'cat' and not self.cat_detected:
+            self.animal_poses.append( (self.x, self.y) )
+            self.cat_detected = True
+            print('append cat')
 
-            elif msg.name == 'elephant' and not self.elephant_detected:
-                self.animal_poses.append( (self.x, self.y) )
-                self.elephant_detected = True
-                print('append elephant')
+        elif msg.name == 'dog' and not self.dog_detected:
+            self.animal_poses.append( (self.x, self.y) )
+            self.dog_detected = True
+            print('append dog')
+
+	elif msg.name == 'elephant' and not self.elephant_detected:
+            self.animal_poses.append( (self.x, self.y) )
+            self.elephant_detected = True
+            print('append elephant')
+
+        print(self.animal_poses)
+        print('---------------------Detected-------------')
+
+
+    # def record_animal_frame(self, msg):
+    #     # OUT : [x, y, theta] of animal position in world frame
+
+    #     # msg type : DetectedObject
+    #     name = msg.name
+    #     ymin, _, ymax, _ = msg.corners
+    #     height = ymax-ymin
+
+    #     # frame name depends on what animal we found
+    #     frame_name = name + "_pose"
+
+    #     return (self.x, self.y)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -179,10 +196,6 @@ class Supervisor:
         """ sends zero velocity to stay put """
 
         vel_g_msg = Twist()
-        vel_g_msg.linear.x = 0
-        vel_g_msg.linear.y = 0
-        vel_g__msg.angular.z = 0
-
         self.cmd_vel_publisher.publish(vel_g_msg)
 
     def close_to(self,x,y,theta,eps):
@@ -235,6 +248,7 @@ class Supervisor:
     def wait_for_instr(self):
         """ sends ready_to_rescue message, wait for response """
         self.stay_idle()
+	print('Waiting for Instruction')
         self.rescue_ready.publish(True)
         self.mode = Mode.WAIT_FOR_INSTR
 
@@ -280,6 +294,8 @@ class Supervisor:
             # Go to the firestation
             self.set_goal_pose(self.firestation_x,self.firestation_y,self.firestation_theta)
 
+        print("Waypoint Updated")
+
         # Change the mode
         self.mode = Mode.NAV
 
@@ -299,8 +315,9 @@ class Supervisor:
 
         # logs the current mode
         if not(self.last_mode_printed == self.mode):
-            print('-----------------Current Mode----------------')
+            print('-------------Current Mode---------------')
             rospy.loginfo("Current Mode: %s", self.mode)
+            print('----------------------------------------')
             self.last_mode_printed = self.mode
 
         # checks which mode it is in and acts accordingly
