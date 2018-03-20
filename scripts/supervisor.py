@@ -93,7 +93,7 @@ class Supervisor:
         # published by "camera_common" in "detector.py"
         rospy.Subscriber('/detector/cat', DetectedObject, self.animal_detected_callback)
         rospy.Subscriber('/detector/dog', DetectedObject, self.animal_detected_callback)
-	rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
+	    rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
 
     def animal_detected_callback(self, msg):
         # call back for when the detector has found an animal - cat or dog -
