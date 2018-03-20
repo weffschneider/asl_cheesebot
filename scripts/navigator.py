@@ -130,6 +130,8 @@ class Navigator:
 
 
     def escape_protocol(self, x, th):
+        ##############################################33
+        # NO LONGER USED
 
         speed = .5
         turn = 1
@@ -171,7 +173,7 @@ class Navigator:
             twist = Twist()
             twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
             twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
-            pub.publish(twist)
+            #pub.publish(twist)
 
 
     def run_navigator(self):
@@ -263,7 +265,7 @@ class Navigator:
                     rospy.logwarn("Navigator: Path too short, not updating")
             else:
                 rospy.logwarn("Navigator: Could not find path")
-                self.escape_protocol(-3, 0)
+                #self.escape_protocol(-3, 0)
                 self.current_plan = []
 
         # if we have a path, execute it (we need at least 3 points for this controller)
@@ -337,7 +339,7 @@ class Navigator:
             return
         else:
             # just stop
-            cmd_x_dot = 0
+            cmd_x_dot = 0.01
             cmd_theta_dot = 0
 
         # saving the last velocity for the controller
