@@ -130,41 +130,21 @@ class Navigator:
 
 
     def escape_protocol(self, x, th):
-        ##############################################33
         # NO LONGER USED
-
-        speed = .5
-        turn = 1
+        speed = .1
+        turn = .5
 
         try:
             pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
 
-            target_speed = 0
-            target_turn = 0
-            control_speed = 0
-            control_turn = 0
-
-            target_speed = speed * x
-            target_turn = turn * th
-
-            if target_speed > control_speed:
-                control_speed = min( target_speed, control_speed + 0.02 )
-            elif target_speed < control_speed:
-                control_speed = max( target_speed, control_speed - 0.02 )
-            else:
-                control_speed = target_speed
-
-            if target_turn > control_turn:
-                control_turn = min( target_turn, control_turn + 0.1 )
-            elif target_turn < control_turn:
-                control_turn = max( target_turn, control_turn - 0.1 )
-            else:
-                control_turn = target_turn
+            control_speed = speed * x
+            control_turn = turn * th
 
             twist = Twist()
             twist.linear.x = control_speed; twist.linear.y = 0; twist.linear.z = 0
             twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = control_turn
             pub.publish(twist)
+            print('backup')
 
         except Exception as e:
             print(e)
@@ -265,7 +245,7 @@ class Navigator:
                     rospy.logwarn("Navigator: Path too short, not updating")
             else:
                 rospy.logwarn("Navigator: Could not find path")
-                #self.escape_protocol(-3, 0)
+                #self.escape_protocol(-1, 0)
                 self.current_plan = []
 
         # if we have a path, execute it (we need at least 3 points for this controller)
@@ -338,8 +318,8 @@ class Navigator:
             self.nav_pose_pub.publish(pose_g_msg)
             return
         else:
-            # just stop
-            cmd_x_dot = 0.01
+            # backup
+            cmd_x_dot = -.01
             cmd_theta_dot = 0
 
         # saving the last velocity for the controller
