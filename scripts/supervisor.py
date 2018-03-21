@@ -5,6 +5,7 @@ import rospy
 from std_msgs.msg import Float32MultiArray, String, Bool
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from asl_turtlebot.msg import DetectedObject
+from visualization_msgs.msg import Marker, MarkerArray
 import tf
 import math
 from enum import Enum
@@ -75,7 +76,10 @@ class Supervisor:
         self.pose_goal_publisher = rospy.Publisher('/cmd_pose', Pose2D, queue_size=10)
         self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.rescue_ready = rospy.Publisher('/ready_to_rescue', Bool, queue_size=1)
-
+        self.pub_mark = rospy.Publisher('/visualization_marker_array', MarkerArray, queue_size = 10)
+        self.markerlist = MarkerArray()
+        self.markerid = 0
+        
         # create subscribers
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
         rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
@@ -93,26 +97,40 @@ class Supervisor:
         # published by "camera_common" in "detector.py"
         rospy.Subscriber('/detector/cat', DetectedObject, self.animal_detected_callback)
         rospy.Subscriber('/detector/dog', DetectedObject, self.animal_detected_callback)
-	    rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
+        rospy.Subscriber('/detector/elephant', DetectedObject, self.animal_detected_callback)
 
     def animal_detected_callback(self, msg):
         # call back for when the detector has found an animal - cat or dog -
 
+        ymin, _, ymax, _ = msg.corners
+        height = ymax-ymin
         print('-------------------Detecting-----------------')
 
         # record the animal's position w.r.t. the robot's pose
         if msg.name == 'cat' and not self.cat_detected:
-            self.animal_poses.append( (self.x, self.y) )
+            dist = 1.98*10**(-5)*height**2 - 7.88*10**(-3)*height + 0.935
+            x_proj = self.x + dist*np.cos(self.theta)
+            y_proj = self.y + dist*np.sin(self.theta)
+            self.animal_poses.append( (x_proj, y_proj) )
+            self.rviz_add_marker('cat', x_proj, y_proj)
             self.cat_detected = True
             print('append cat')
 
         elif msg.name == 'dog' and not self.dog_detected:
-            self.animal_poses.append( (self.x, self.y) )
+            dist = -6.37*10**(-6)*height**2 + 4.27*10**(-4)*height + 0.255
+            x_proj = self.x + dist*np.cos(self.theta)
+            y_proj = self.y + dist*np.sin(self.theta)
+            self.animal_poses.append( (x_proj, y_proj) )
+            self.rviz_add_marker('dog', x_proj, y_proj)
             self.dog_detected = True
             print('append dog')
-
-	elif msg.name == 'elephant' and not self.elephant_detected:
-            self.animal_poses.append( (self.x, self.y) )
+            
+        elif msg.name == 'elephant' and not self.elephant_detected:
+            dist = 4.25*10**(-5)*height**2 - 1.36*10**(-2)*height + 1.25
+            x_proj = self.x + dist*np.cos(self.theta)
+            y_proj = self.y + dist*np.sin(self.theta)
+            self.animal_poses.append( (x_proj, y_proj) )
+            self.rviz_add_marker('elephant', x_proj, y_proj)
             self.elephant_detected = True
             print('append elephant')
 
@@ -132,6 +150,58 @@ class Supervisor:
     #     frame_name = name + "_pose"
 
     #     return (self.x, self.y)
+    
+    def rviz_add_marker(self, name, x, y):
+        '''add marker to rviz'''
+        # ellipsoid marker
+        marker = Marker()
+        marker.header.frame_id = 'map'
+        marker.type = marker.SPHERE
+        marker.action = marker.ADD
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.01
+        
+        marker.color.a = 1.0
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = x
+        marker.pose.position.y = y 
+        marker.pose.position.z = 0 
+        
+        marker.id = self.markerid
+        self.markerid += 1
+        
+        self.markerlist.markers.append(marker)
+        
+        # text marker
+        marker = Marker()
+        marker.header.frame_id = 'map'
+        marker.type = marker.TEXT_VIEW_FACING
+        marker.action = marker.ADD
+        
+        marker.scale.z = 0.07
+        
+        marker.pose.orientation.w = 1.0
+        marker.pose.position.x = x
+        marker.pose.position.y = y 
+        marker.pose.position.z = .1 
+        
+        marker.color.a = 1.0
+        marker.color.r = 0.0
+        marker.color.g = 0.0
+        marker.color.b = 0.0
+        
+        marker.text = name
+        
+        marker.id = self.markerid
+        self.markerid += 1
+        
+        self.markerlist.markers.append(marker)
+        self.pub_mark.publish(self.markerlist)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """

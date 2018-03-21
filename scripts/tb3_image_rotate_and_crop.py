@@ -26,6 +26,7 @@ class ImageTransformer:
         self.image_repub.publish(repub_msg)
 
     def transform_camera_info_and_repub(self, msg):
+        '''
         msg.height, msg.width = msg.width, msg.height
         D = list(msg.D)
         D[2], D[3] = -D[3], D[2]    # I'm reasonably sure about this
@@ -37,7 +38,7 @@ class ImageTransformer:
         P[0], P[2], P[5], P[6] = P[5], P[6], P[0], msg.height - P[2] - CHOP_TOP
         msg.P = P
         self.camera_info_repub.publish(msg)
-
+        '''
     def run(self):
         rospy.spin()
 
