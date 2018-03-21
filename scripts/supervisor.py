@@ -104,7 +104,7 @@ class Supervisor:
 
         ymin, _, ymax, _ = msg.corners
         height = ymax-ymin
-        print('-------------------Detecting-----------------')
+        #print('-------------------Detecting-----------------')
 
         # record the animal's position w.r.t. the robot's pose
         if msg.name == 'cat' and not self.cat_detected:
@@ -134,8 +134,8 @@ class Supervisor:
             self.elephant_detected = True
             print('append elephant')
 
-        print(self.animal_poses)
-        print('---------------------Detected-------------')
+        #print(self.animal_poses)
+        #print('---------------------Detected-------------')
 
 
     # def record_animal_frame(self, msg):
@@ -183,7 +183,7 @@ class Supervisor:
         marker.type = marker.TEXT_VIEW_FACING
         marker.action = marker.ADD
         
-        marker.scale.z = 0.07
+        marker.scale.z = 0.1
         
         marker.pose.orientation.w = 1.0
         marker.pose.position.x = x
@@ -191,7 +191,7 @@ class Supervisor:
         marker.pose.position.z = .1 
         
         marker.color.a = 1.0
-        marker.color.r = 0.0
+        marker.color.r = 1.0
         marker.color.g = 0.0
         marker.color.b = 0.0
         
